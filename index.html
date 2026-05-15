@@ -2,11 +2,59 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>picture background remover</title>
+    <meta
+      name="description"
+      content="Remove unwanted objects from photos instantly using AI. LaMa inpainting runs entirely in your browser with WebGPU — no upload, no server, 100% private."
+    />
+    <meta name="theme-color" content="#31413d" />
+
+    <link rel="canonical" href="https://bgremove.itea.fit/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <meta property="og:title" content="Instant Cleanup — Free AI Image Inpainting in Your Browser" />
+    <meta
+      property="og:description"
+      content="Remove unwanted objects from photos using LaMa AI, entirely in your browser. No upload, no server, 100% private."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://bgremove.itea.fit/" />
+    <meta property="og:image" content="https://bgremove.itea.fit/og-image.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Instant Cleanup — Free AI Image Inpainting in Your Browser" />
+    <meta
+      name="twitter:description"
+      content="Remove unwanted objects from photos using LaMa AI, entirely in your browser. No upload, no server, 100% private."
+    />
+
+    <title>Instant Cleanup — Free AI Image Inpainting in Your Browser</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Instant Cleanup",
+        "description": "AI image inpainting tool that runs entirely in the browser using the LaMa ONNX model.",
+        "url": "https://bgremove.itea.fit/",
+        "applicationCategory": "PhotoApplication",
+        "operatingSystem": "Any",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <h1>Instant Cleanup — AI Image Inpainting in Your Browser</h1>
+      <p>
+        Upload a photo, paint the object you want to remove, and let LaMa AI repair it locally. No
+        data leaves your device. JavaScript is required to run the AI model.
+      </p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
