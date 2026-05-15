@@ -3,7 +3,7 @@ import './App.css'
 import { MaskStage } from './components/MaskStage'
 import { useElementSize } from './hooks/useElementSize'
 import { runInpaint } from './lib/inpaint'
-import { getInpaintSession } from './lib/ort'
+import { getConfiguredModelUrl, getInpaintSession } from './lib/ort'
 import {
   loadImageFile,
   revokeImageSourceUrl,
@@ -72,6 +72,48 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    if (!sessionPromiseRef.current) {
+      sessionPromiseRef.current = getInpaintSession(
+        (status) => {
+          if (!cancelled) {
+            setSessionState(status)
+          }
+        },
+        (update) => {
+          if (!cancelled) {
+            setRuntimeMetrics((previous) => ({
+              ...previous,
+              ...update,
+            }))
+          }
+        },
+      )
+    }
+
+    void withTimeout(
+      sessionPromiseRef.current,
+      SESSION_TIMEOUT_MS,
+      'Model initialization timed out. This usually means the model download or session creation stalled.',
+    ).catch((error) => {
+      if (cancelled) {
+        return
+      }
+
+      setSessionState({
+        status: 'error',
+        provider: null,
+        message: error instanceof Error ? error.message : 'Failed to initialize ONNX Runtime.',
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const ensureSession = () => {
     if (!sessionPromiseRef.current) {
       sessionPromiseRef.current = getInpaintSession(
@@ -85,10 +127,10 @@ function App() {
           }))
         },
       )
-    } else {
+    } else if (sessionState.status === 'ready') {
       setRuntimeMetrics((previous) => ({
         ...previous,
-        modelSource: previous.modelSource === 'pending' ? 'memory' : previous.modelSource,
+        modelSource: 'memory',
       }))
     }
 
@@ -113,7 +155,7 @@ function App() {
       setRunState({
         status: 'idle',
         message:
-          'Mask the unwanted area. First run will initialize the model; later runs reuse the same session.',
+          'Mask the unwanted area. Cleanup unlocks after the runtime finishes loading the model and wasm files.',
       })
 
       setResultUrl((previous) => {
@@ -249,6 +291,7 @@ function App() {
       : runState.status === 'done'
         ? 'success'
         : 'neutral'
+  const configuredModelUrl = runtimeMetrics.modelUrl ?? getConfiguredModelUrl()
 
   return (
     <main className="shell">
@@ -272,7 +315,7 @@ function App() {
               <span>{sourceImage ? 'Replace Image' : 'Upload Image'}</span>
             </label>
             <p className="panel-note">
-              Default model path: <code>/models/lama_fp32.onnx</code>
+              Configured model source: <code>{configuredModelUrl}</code>
             </p>
             {sourceImage ? (
               <dl className="meta-grid">
@@ -384,7 +427,7 @@ function App() {
               onClick={handleRun}
               disabled={
                 !sourceImage ||
-                sessionState.status === 'loading' ||
+                sessionState.status !== 'ready' ||
                 runState.status === 'running'
               }
             >
