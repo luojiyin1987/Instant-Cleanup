@@ -3,11 +3,11 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Download the recommended LaMa ONNX model into public/models.
+Download the recommended LaMa ONNX model into local-models.
 
 Usage:
   ./scripts/fetch-model.sh
-  ./scripts/fetch-model.sh --output public/models/lama_fp32.onnx
+  ./scripts/fetch-model.sh --output local-models/lama_fp32.onnx
 
 Options:
   -o, --output PATH   Override output path.
@@ -15,7 +15,7 @@ Options:
 EOF
 }
 
-output_path="public/models/lama_fp32.onnx"
+output_path="local-models/lama_fp32.onnx"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
