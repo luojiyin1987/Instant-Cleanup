@@ -12,8 +12,8 @@ dist
 dist-ssr
 *.local
 .env
-public/models/*.onnx
-!public/models/.gitkeep
+local-models/*.onnx
+!local-models/.gitkeep
 src/generated/ort/*
 !src/generated/ort/.gitkeep
 
