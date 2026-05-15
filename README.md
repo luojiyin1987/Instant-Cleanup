@@ -5,6 +5,8 @@ Browser-side image cleanup built for Cloudflare Pages. The app uses the
 `onnxruntime-web`, prefers WebGPU, and falls back to WASM when GPU execution is
 not available. The model is downloaded with visible progress, cached in the
 browser, and reused across page refreshes when Cache Storage is available.
+Production builds load the ONNX Runtime Web `jsep` wasm files from jsDelivr so
+Cloudflare Pages does not need to host a `>25 MiB` wasm asset.
 
 ## Flow
 
@@ -34,13 +36,19 @@ npm run model:fetch
 npm run dev
 ```
 
-The default model location is `public/models/lama_fp32.onnx`, which is served as
-`/models/lama_fp32.onnx`.
+For local development, the downloaded model is stored at
+`local-models/lama_fp32.onnx`. Vite serves it at `/models/lama_fp32.onnx` only
+in development, so it is not copied into `dist/`.
 
 Default model resolution is environment-specific:
 
 - Development uses `/models/lama_fp32.onnx`
 - Production uses `https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx`
+
+ORT runtime asset resolution is also environment-specific:
+
+- Development uses local generated files under `src/generated/ort/`
+- Production uses `https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0/dist/`
 
 ## Optional Environment Override
 
@@ -91,6 +99,30 @@ You can deploy from the dashboard or with Wrangler:
 ```bash
 npx wrangler pages deploy dist
 ```
+
+If you want this repo to be the source of truth for Pages configuration, use the
+included [wrangler.jsonc](/home/luo/devOps/Instant-Cleanup/wrangler.jsonc:1).
+It sets:
+
+- `name`: `instant-cleanup`
+- `pages_build_output_dir`: `./dist`
+- `compatibility_date`: `2026-05-15`
+
+Wrangler usage in this repo:
+
+```bash
+npm run cf:project:create
+npm run cf:deploy
+npm run cf:dev
+```
+
+Notes:
+
+- The `name` in `wrangler.jsonc` must match your actual Pages project name. If
+  your dashboard project uses a different name, update the file before deploy.
+- `VITE_MODEL_URL` is a Vite build-time variable, not a Wrangler runtime
+  binding. In this project, production model selection is already handled in
+  frontend code, so the Wrangler config does not need to set it.
 
 ## Notes
 
