@@ -6,6 +6,9 @@
   "scripts": {
     "predev": "node ./scripts/sync-ort-assets.mjs",
     "prebuild": "node ./scripts/sync-ort-assets.mjs",
+    "cf:deploy": "npm run build && wrangler pages deploy",
+    "cf:dev": "npm run build && wrangler pages dev",
+    "cf:project:create": "wrangler pages project create instant-cleanup",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "check": "npm run lint && npm run build",
