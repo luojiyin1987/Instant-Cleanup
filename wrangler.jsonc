@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // Must match your Cloudflare Pages project name.
+  "name": "instant-cleanup",
+
+  // Pages deploys the prebuilt Vite output from here.
+  "pages_build_output_dir": "./dist",
+
+  // Keep this reasonably current when you intentionally change runtime behavior.
+  "compatibility_date": "2026-05-15"
+}
