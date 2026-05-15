@@ -1,5 +1,3 @@
-import ortJsepMjsUrl from '../generated/ort/ort-wasm-simd-threaded.jsep.mjs?url'
-import ortJsepWasmUrl from '../generated/ort/ort-wasm-simd-threaded.jsep.wasm?url'
 import { loadModelBuffer } from './model-cache'
 import type { SessionState } from '../types'
 
@@ -9,6 +7,9 @@ type OrtModule = typeof import('onnxruntime-web/webgpu')
 const DEFAULT_LOCAL_MODEL_URL = '/models/lama_fp32.onnx'
 const DEFAULT_PRODUCTION_MODEL_URL =
   'https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx'
+const ORT_CDN_BASE = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0/dist/'
+const ORT_CDN_WASM_MJS_URL = `${ORT_CDN_BASE}ort-wasm-simd-threaded.jsep.mjs`
+const ORT_CDN_WASM_BIN_URL = `${ORT_CDN_BASE}ort-wasm-simd-threaded.jsep.wasm`
 
 let sessionPromise:
   | Promise<{
@@ -39,6 +40,13 @@ export function getInpaintSession(
   return sessionPromise
 }
 
+export function getConfiguredModelUrl() {
+  return (
+    import.meta.env.VITE_MODEL_URL ||
+    (import.meta.env.DEV ? DEFAULT_LOCAL_MODEL_URL : DEFAULT_PRODUCTION_MODEL_URL)
+  )
+}
+
 async function createInpaintSession(
   onStatus?: (status: SessionState) => void,
   onMetrics?: (update: SessionMetricsUpdate) => void,
@@ -58,16 +66,12 @@ async function createInpaintSession(
   })
 
   const ort = await import('onnxruntime-web/webgpu')
+  const wasmPaths = await resolveOrtWasmPaths()
   ort.env.logLevel = 'warning'
   ort.env.wasm.numThreads = 1
-  ort.env.wasm.wasmPaths = {
-    mjs: ortJsepMjsUrl,
-    wasm: ortJsepWasmUrl,
-  }
+  ort.env.wasm.wasmPaths = wasmPaths
 
-  const modelUrl =
-    import.meta.env.VITE_MODEL_URL ||
-    (import.meta.env.DEV ? DEFAULT_LOCAL_MODEL_URL : DEFAULT_PRODUCTION_MODEL_URL)
+  const modelUrl = getConfiguredModelUrl()
   const cacheBustedModelUrl = `${modelUrl}${modelUrl.includes('?') ? '&' : '?'}v=2026-05-15`
 
   onMetrics?.({
@@ -165,5 +169,24 @@ async function createInpaintSession(
     ort,
     provider: 'wasm',
     session,
+  }
+}
+
+async function resolveOrtWasmPaths() {
+  if (import.meta.env.DEV) {
+    const [{ default: localMjsUrl }, { default: localWasmUrl }] = await Promise.all([
+      import('../generated/ort/ort-wasm-simd-threaded.jsep.mjs?url'),
+      import('../generated/ort/ort-wasm-simd-threaded.jsep.wasm?url'),
+    ])
+
+    return {
+      mjs: localMjsUrl,
+      wasm: localWasmUrl,
+    }
+  }
+
+  return {
+    mjs: ORT_CDN_WASM_MJS_URL,
+    wasm: ORT_CDN_WASM_BIN_URL,
   }
 }
