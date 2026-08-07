@@ -29,6 +29,79 @@
 
     <title>Free AI Object Remover — Remove Unwanted Objects from Photos</title>
 
+    <style>
+      /* Reserve the editor's first-render footprint before React mounts to prevent CLS. */
+      #root {
+        min-height: 1024px;
+      }
+
+      .app-placeholder {
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .app-placeholder__controls {
+        display: grid;
+        grid-template-rows: 170px 250px 550px;
+        gap: 18px;
+      }
+
+      .app-placeholder__card,
+      .app-placeholder__editor {
+        overflow: hidden;
+        border: 1px solid rgba(16, 26, 24, 0.11);
+        border-radius: 24px;
+        background: rgba(255, 251, 245, 0.72);
+        box-shadow: 0 18px 50px rgba(21, 31, 28, 0.04);
+      }
+
+      .app-placeholder__card::before,
+      .app-placeholder__editor::before {
+        content: '';
+        display: block;
+        width: min(180px, 50%);
+        height: 18px;
+        margin: 22px;
+        border-radius: 999px;
+        background: rgba(16, 26, 24, 0.08);
+      }
+
+      .app-placeholder__editor {
+        min-height: 640px;
+      }
+
+      @media (max-width: 1100px) {
+        #root {
+          min-height: 1522px;
+        }
+
+        .app-placeholder {
+          grid-template-columns: 1fr;
+        }
+
+        .app-placeholder__editor {
+          min-height: 480px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        #root {
+          min-height: 1792px;
+        }
+
+        .app-placeholder__controls {
+          grid-template-rows: 190px 270px 780px;
+        }
+
+        .app-placeholder__card,
+        .app-placeholder__editor {
+          border-radius: 20px;
+        }
+      }
+    </style>
+
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -84,7 +157,16 @@
         </p>
       </noscript>
 
-      <div id="root"></div>
+      <div id="root">
+        <div class="app-placeholder" id="cleanup-tool" aria-hidden="true">
+          <div class="app-placeholder__controls">
+            <div class="app-placeholder__card"></div>
+            <div class="app-placeholder__card"></div>
+            <div class="app-placeholder__card"></div>
+          </div>
+          <div class="app-placeholder__editor"></div>
+        </div>
+      </div>
 
       <section class="seo-content" aria-label="About Instant Cleanup">
         <div class="feature-grid">
