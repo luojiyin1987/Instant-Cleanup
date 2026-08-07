@@ -22,7 +22,7 @@ function App() {
   const [sessionState, setSessionState] = useState<SessionState>({
     status: 'idle',
     provider: null,
-    message: 'Choose an image to start loading the local AI model.',
+    message: 'Open the image picker to start loading the local AI model.',
   })
   const [runState, setRunState] = useState<{
     status: 'idle' | 'running' | 'error' | 'done'
@@ -95,11 +95,33 @@ function App() {
     return sessionPromiseRef.current
   }
 
+  const startSessionWarmup = () => {
+    if (sessionPromiseRef.current) {
+      return
+    }
+
+    void withTimeout(
+      ensureSession(),
+      SESSION_TIMEOUT_MS,
+      'Model initialization timed out. This usually means the model download or session creation stalled.',
+    ).catch((error) => {
+      setSessionState({
+        status: 'error',
+        provider: null,
+        message: error instanceof Error ? error.message : 'Failed to initialize ONNX Runtime.',
+      })
+    })
+  }
+
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) {
       return
     }
+
+    // Fallback for non-pointer file picker activation. Pointer users normally
+    // start this download before the native picker opens.
+    startSessionWarmup()
 
     try {
       const image = await loadImageFile(file)
@@ -123,18 +145,6 @@ function App() {
         return null
       })
       setResultName(file.name.replace(/\.[^.]+$/, '') + '-cleanup.png')
-
-      void withTimeout(
-        ensureSession(),
-        SESSION_TIMEOUT_MS,
-        'Model initialization timed out. This usually means the model download or session creation stalled.',
-      ).catch((error) => {
-        setSessionState({
-          status: 'error',
-          provider: null,
-          message: error instanceof Error ? error.message : 'Failed to initialize ONNX Runtime.',
-        })
-      })
     } catch (error) {
       setRunState({
         status: 'error',
@@ -268,7 +278,7 @@ function App() {
       <aside className="control-panel">
         <div className="panel-card">
           <h2>Source photo</h2>
-          <label className="upload-button">
+          <label className="upload-button" onPointerDown={startSessionWarmup}>
             <input accept="image/*" type="file" onChange={handleFileChange} />
             <span>{sourceImage ? 'Replace Image' : 'Upload Image'}</span>
           </label>
@@ -439,8 +449,8 @@ function App() {
             <div className="empty-state">
               <h2>Upload a photo to remove an object</h2>
               <p>
-                Your image stays on this device. After you choose a photo, the local AI model starts
-                loading while you paint the unwanted area in red.
+                Your image stays on this device. Open the image picker to start loading the local AI
+                model while you choose a photo, then paint the unwanted area in red.
               </p>
             </div>
           )}
