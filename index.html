@@ -5,40 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Remove unwanted objects from photos instantly using AI. LaMa inpainting runs entirely in your browser with WebGPU — no upload, no server, 100% private."
+      content="Free private AI object remover for photos. Remove unwanted people, objects, text, and distractions directly in your browser without uploading images."
     />
     <meta name="theme-color" content="#31413d" />
 
     <link rel="canonical" href="https://cleanup.itea.fit/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <meta property="og:title" content="Instant Cleanup — Free AI Image Inpainting in Your Browser" />
+    <meta property="og:title" content="Free AI Object Remover — Instant Cleanup" />
     <meta
       property="og:description"
-      content="Remove unwanted objects from photos using LaMa AI, entirely in your browser. No upload, no server, 100% private."
+      content="Remove unwanted objects from photos privately in your browser. No uploads, no account, and no server-side image processing."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cleanup.itea.fit/" />
-    <meta property="og:image" content="https://cleanup.itea.fit/og-image.png" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Instant Cleanup — Free AI Image Inpainting in Your Browser" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Free AI Object Remover — Instant Cleanup" />
     <meta
       name="twitter:description"
-      content="Remove unwanted objects from photos using LaMa AI, entirely in your browser. No upload, no server, 100% private."
+      content="Remove unwanted objects from photos privately in your browser. No uploads, no account, and no server-side image processing."
     />
 
-    <title>Instant Cleanup — Free AI Image Inpainting in Your Browser</title>
+    <title>Free AI Object Remover — Remove Unwanted Objects from Photos</title>
 
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "Instant Cleanup",
-        "description": "AI image inpainting tool that runs entirely in the browser using the LaMa ONNX model.",
+        "description": "Free AI object remover for photos that runs locally in the browser without uploading images to a server.",
         "url": "https://cleanup.itea.fit/",
-        "applicationCategory": "PhotoApplication",
+        "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
+        "browserRequirements": "JavaScript required; WebGPU recommended with WASM fallback",
+        "featureList": [
+          "Remove unwanted objects from photos",
+          "Local browser-side AI processing",
+          "No image uploads",
+          "WebGPU acceleration with WASM fallback"
+        ],
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -48,14 +54,127 @@
     </script>
   </head>
   <body>
-    <noscript>
-      <h1>Instant Cleanup — AI Image Inpainting in Your Browser</h1>
-      <p>
-        Upload a photo, paint the object you want to remove, and let LaMa AI repair it locally. No
-        data leaves your device. JavaScript is required to run the AI model.
-      </p>
-    </noscript>
-    <div id="root"></div>
+    <main class="shell">
+      <header class="hero-panel">
+        <p class="eyebrow">Private AI photo cleanup · Runs locally</p>
+        <h1>Free AI Object Remover for Photos</h1>
+        <p class="hero-copy">
+          Remove unwanted people, objects, text, and distractions from photos directly in your
+          browser. Your image stays on your device — there is no upload, no account, and no
+          server-side photo processing.
+        </p>
+        <div class="hero-actions">
+          <a class="hero-cta" href="#cleanup-tool">Remove an object from a photo</a>
+          <a
+            class="hero-secondary"
+            href="https://github.com/luojiyin1987/Instant-Cleanup"
+            target="_blank"
+            rel="noreferrer"
+          >
+            View source on GitHub
+          </a>
+        </div>
+        <p class="hero-proof">Free to use · Local LaMa AI · WebGPU accelerated when available</p>
+      </header>
+
+      <noscript>
+        <p class="noscript-note">
+          JavaScript is required to run the local AI editor, but your photos are never uploaded to
+          a server.
+        </p>
+      </noscript>
+
+      <div id="root"></div>
+
+      <section class="seo-content" aria-label="About Instant Cleanup">
+        <div class="feature-grid">
+          <article>
+            <p class="eyebrow">Private by design</p>
+            <h2>Your photos stay on your device</h2>
+            <p>
+              Instant Cleanup runs the LaMa inpainting model in your browser with ONNX Runtime Web.
+              The photo you choose is processed locally instead of being sent to an image-editing
+              server.
+            </p>
+          </article>
+          <article>
+            <p class="eyebrow">Simple workflow</p>
+            <h2>Brush over what you want removed</h2>
+            <p>
+              Upload a photo, paint a mask over the unwanted area, run cleanup, and download the
+              repaired PNG. You can reuse the result and clean another area without leaving the
+              page.
+            </p>
+          </article>
+          <article>
+            <p class="eyebrow">Local AI</p>
+            <h2>WebGPU first, WASM fallback</h2>
+            <p>
+              Supported browsers use WebGPU for local inference. When WebGPU is unavailable, the
+              app can fall back to WebAssembly so the cleanup workflow remains browser-based.
+            </p>
+          </article>
+        </div>
+
+        <section class="seo-section">
+          <h2>How to remove unwanted objects from a photo</h2>
+          <ol class="steps-list">
+            <li><strong>Choose a photo.</strong> The image opens locally in your browser.</li>
+            <li><strong>Paint the unwanted area.</strong> Use the brush to cover the object, person, text, or distraction you want to remove.</li>
+            <li><strong>Run AI cleanup.</strong> Instant Cleanup repairs the selected region with the local LaMa model.</li>
+            <li><strong>Download the result.</strong> Save the cleaned image as a PNG or use it as the base for another edit.</li>
+          </ol>
+        </section>
+
+        <section class="seo-section">
+          <h2>What can you remove?</h2>
+          <p>
+            Use Instant Cleanup for small unwanted objects, background distractions, photobombers,
+            signs, text, clutter, and other areas that can be reconstructed from the surrounding
+            image. Results depend on the photo and mask, so smaller, well-defined selections often
+            work best.
+          </p>
+        </section>
+
+        <section class="seo-section">
+          <h2>Why use a browser-based AI object remover?</h2>
+          <p>
+            Many online photo cleanup tools require uploading images before processing them. Instant
+            Cleanup is designed for a different workflow: the model executes locally, which keeps
+            the original photo on your device and avoids creating a server-side copy of your image.
+            The AI model itself may be downloaded and cached by your browser when you choose a photo.
+          </p>
+        </section>
+
+        <section class="seo-section faq-section">
+          <h2>Frequently asked questions</h2>
+          <details>
+            <summary>Is Instant Cleanup free?</summary>
+            <p>Yes. The browser-based object remover is free to use and does not require an account.</p>
+          </details>
+          <details>
+            <summary>Are my photos uploaded?</summary>
+            <p>No. Image loading, masking, inference, and result generation happen in your browser.</p>
+          </details>
+          <details>
+            <summary>What is AI inpainting?</summary>
+            <p>
+              Inpainting reconstructs a selected part of an image using the visual context around
+              it. Instant Cleanup uses LaMa for this local repair step.
+            </p>
+          </details>
+          <details>
+            <summary>Why does the AI model need to load?</summary>
+            <p>
+              Local processing requires the model to be available in your browser. Instant Cleanup
+              starts loading it after you choose an image instead of downloading it as soon as the
+              landing page opens.
+            </p>
+          </details>
+        </section>
+      </section>
+    </main>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
