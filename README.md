@@ -1,5 +1,7 @@
 # Instant Cleanup
 
+Try it online → cleanup.itea.fit
+
 Browser-side image cleanup built for Cloudflare Pages. The app uses
 [`Carve/LaMa-ONNX`](https://huggingface.co/Carve/LaMa-ONNX) with
 `onnxruntime-web`, prefers WebGPU, and falls back to single-threaded WASM.
