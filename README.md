@@ -1,25 +1,22 @@
 # Instant Cleanup
 
-Try it online → cleanup.itea.fit
+**[Try Instant Cleanup online → cleanup.itea.fit](https://cleanup.itea.fit/)**
 
-Browser-side image cleanup built for Cloudflare Pages. The app uses
-[`Carve/LaMa-ONNX`](https://huggingface.co/Carve/LaMa-ONNX) with
-`onnxruntime-web`, prefers WebGPU, and falls back to single-threaded WASM.
+A free, private AI object remover that runs entirely in the browser. Instant Cleanup uses
+[`Carve/LaMa-ONNX`](https://huggingface.co/Carve/LaMa-ONNX) with `onnxruntime-web`, prefers WebGPU,
+and falls back to single-threaded WASM. Photos are processed locally and are not uploaded to an
+image-processing server.
 
-The runtime now preloads:
-
-- ONNX Runtime wasm assets
-- the LaMa model binary
-- the inference session
-
-`Run Cleanup` stays disabled until those assets are fully loaded.
+The landing page stays lightweight. ONNX Runtime assets, the LaMa model binary, and the inference
+session start loading after the user chooses an image. `Remove Object` stays disabled until the
+local runtime is ready.
 
 ## Flow
 
-1. Page loads and preloads wasm, model, and session.
-2. User uploads an image.
-3. The image is displayed on a Konva canvas.
-4. User paints a mask.
+1. Page loads without downloading the large AI model.
+2. User uploads an image and model initialization starts in the background.
+3. The image is displayed on a Konva canvas while the runtime loads.
+4. User paints a mask over the unwanted object.
 5. The app computes a square ROI around the mask.
 6. That ROI is resized to `512×512`.
 7. ONNX Runtime Web runs LaMa locally in the browser.
@@ -68,9 +65,11 @@ This split exists because Cloudflare Pages free deploys reject files larger than
 
 ## Runtime Behavior
 
+- The landing page does not fetch the AI model before the user selects a photo.
+- Choosing a photo starts model download and session initialization in the background.
 - The app shows download progress for the model.
 - The model binary is cached in browser Cache Storage when available.
-- Later refreshes usually load from browser cache instead of re-downloading.
+- Later edits and refreshes can load from browser cache instead of re-downloading.
 - Runtime metrics show model source, model size, init time, inference time, and
   per-step timings.
 
@@ -113,7 +112,7 @@ Standard Pages settings:
 - Build command: `npm run build`
 - Build output directory: `dist`
 
-Wrangler config is included in [wrangler.jsonc](/home/luo/devOps/Instant-Cleanup/wrangler.jsonc:1):
+Wrangler config is included in [wrangler.jsonc](./wrangler.jsonc):
 
 - `name`: `instant-cleanup`
 - `pages_build_output_dir`: `./dist`
