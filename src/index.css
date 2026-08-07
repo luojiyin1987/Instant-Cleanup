@@ -9,7 +9,7 @@
   --paper-strong: #fffaf2;
   --ink: #31413d;
   --ink-strong: #111b18;
-  --rust: #cf4328;
+  --rust: #b8341f;
   --moss: #2f6b4b;
   --line: rgba(17, 27, 24, 0.14);
 
@@ -84,4 +84,16 @@ code {
 
 a {
   color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input[type='range']:focus-visible {
+  outline: 3px solid var(--ink-strong);
+  outline-offset: 3px;
+}
+
+.upload-button:focus-within span {
+  outline: 3px solid var(--ink-strong);
+  outline-offset: 3px;
 }
