@@ -8,21 +8,22 @@ and falls back to single-threaded WASM. Photos are processed locally and are not
 image-processing server.
 
 The landing page stays lightweight. ONNX Runtime assets, the LaMa model binary, and the inference
-session start loading after the user chooses an image. `Remove Object` stays disabled until the
-local runtime is ready.
+session start loading when the user opens the image picker, so model loading can overlap with photo
+selection. `Remove Object` stays disabled until the local runtime is ready.
 
 ## Flow
 
 1. Page loads without downloading the large AI model.
-2. User uploads an image and model initialization starts in the background.
-3. The image is displayed on a Konva canvas while the runtime loads.
-4. User paints a mask over the unwanted object.
-5. The app computes a square ROI around the mask.
-6. That ROI is resized to `512×512`.
-7. ONNX Runtime Web runs LaMa locally in the browser.
-8. The repaired patch is resized back to the ROI size.
-9. A feathered mask blends the patch into the original image.
-10. The result is downloaded as PNG.
+2. User opens the image picker and model initialization starts in the background.
+3. Model loading continues while the user chooses a photo.
+4. The selected image is displayed on a Konva canvas while the runtime finishes loading.
+5. User paints a mask over the unwanted object.
+6. The app computes a square ROI around the mask.
+7. That ROI is resized to `512×512`.
+8. ONNX Runtime Web runs LaMa locally in the browser.
+9. The repaired patch is resized back to the ROI size.
+10. A feathered mask blends the patch into the original image.
+11. The result is downloaded as PNG.
 
 ## Stack
 
@@ -65,8 +66,9 @@ This split exists because Cloudflare Pages free deploys reject files larger than
 
 ## Runtime Behavior
 
-- The landing page does not fetch the AI model before the user selects a photo.
-- Choosing a photo starts model download and session initialization in the background.
+- The landing page does not fetch the AI model before the user expresses upload intent.
+- Pointer activation of `Upload Image` starts model download and session initialization before the native file picker opens.
+- File selection also starts the warmup as a fallback for non-pointer activation.
 - The app shows download progress for the model.
 - The model binary is cached in browser Cache Storage when available.
 - Later edits and refreshes can load from browser cache instead of re-downloading.
