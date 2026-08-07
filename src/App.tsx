@@ -22,7 +22,7 @@ function App() {
   const [sessionState, setSessionState] = useState<SessionState>({
     status: 'idle',
     provider: null,
-    message: 'Model not loaded yet. First run will download and initialize LaMa in your browser.',
+    message: 'Choose an image to start loading the local AI model.',
   })
   const [runState, setRunState] = useState<{
     status: 'idle' | 'running' | 'error' | 'done'
@@ -72,48 +72,6 @@ function App() {
     }
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-
-    if (!sessionPromiseRef.current) {
-      sessionPromiseRef.current = getInpaintSession(
-        (status) => {
-          if (!cancelled) {
-            setSessionState(status)
-          }
-        },
-        (update) => {
-          if (!cancelled) {
-            setRuntimeMetrics((previous) => ({
-              ...previous,
-              ...update,
-            }))
-          }
-        },
-      )
-    }
-
-    void withTimeout(
-      sessionPromiseRef.current,
-      SESSION_TIMEOUT_MS,
-      'Model initialization timed out. This usually means the model download or session creation stalled.',
-    ).catch((error) => {
-      if (cancelled) {
-        return
-      }
-
-      setSessionState({
-        status: 'error',
-        provider: null,
-        message: error instanceof Error ? error.message : 'Failed to initialize ONNX Runtime.',
-      })
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   const ensureSession = () => {
     if (!sessionPromiseRef.current) {
       sessionPromiseRef.current = getInpaintSession(
@@ -155,7 +113,7 @@ function App() {
       setRunState({
         status: 'idle',
         message:
-          'Mask the unwanted area. Cleanup unlocks after the runtime finishes loading the model and wasm files.',
+          'Paint over the unwanted area while the local model finishes loading in the background.',
       })
 
       setResultUrl((previous) => {
@@ -165,6 +123,18 @@ function App() {
         return null
       })
       setResultName(file.name.replace(/\.[^.]+$/, '') + '-cleanup.png')
+
+      void withTimeout(
+        ensureSession(),
+        SESSION_TIMEOUT_MS,
+        'Model initialization timed out. This usually means the model download or session creation stalled.',
+      ).catch((error) => {
+        setSessionState({
+          status: 'error',
+          provider: null,
+          message: error instanceof Error ? error.message : 'Failed to initialize ONNX Runtime.',
+        })
+      })
     } catch (error) {
       setRunState({
         status: 'error',
@@ -294,212 +264,199 @@ function App() {
   const configuredModelUrl = runtimeMetrics.modelUrl ?? getConfiguredModelUrl()
 
   return (
-    <main className="shell">
-      <section className="hero-panel">
-        <p className="eyebrow">Cloudflare Pages · Local ONNX Inpainting</p>
-        <h1>Instant Cleanup</h1>
-        <p className="hero-copy">
-          LaMa runs entirely in the browser. Users paint a mask, the app crops only the
-          affected region, normalizes it to 512×512, executes ONNX Runtime Web with
-          WebGPU first and WASM as fallback, then feathers the repaired patch back into
-          the original image.
-        </p>
-      </section>
-
-      <section className="workspace">
-        <aside className="control-panel">
-          <div className="panel-card">
-            <h2>Source</h2>
-            <label className="upload-button">
-              <input accept="image/*" type="file" onChange={handleFileChange} />
-              <span>{sourceImage ? 'Replace Image' : 'Upload Image'}</span>
-            </label>
-            <p className="panel-note">
-              Configured model source: <code>{configuredModelUrl}</code>
-            </p>
-            {sourceImage ? (
-              <dl className="meta-grid">
-                <div>
-                  <dt>Name</dt>
-                  <dd>{sourceImage.name}</dd>
-                </div>
-                <div>
-                  <dt>Size</dt>
-                  <dd>
-                    {sourceImage.width}×{sourceImage.height}
-                  </dd>
-                </div>
-              </dl>
-            ) : null}
-          </div>
-
-          <div className="panel-card">
-            <h2>Mask</h2>
-            <div className="segmented">
-              <button
-                type="button"
-                className={toolMode === 'brush' ? 'active' : ''}
-                onClick={() => setToolMode('brush')}
-              >
-                Brush
-              </button>
-              <button
-                type="button"
-                className={toolMode === 'erase' ? 'active' : ''}
-                onClick={() => setToolMode('erase')}
-              >
-                Erase
-              </button>
-            </div>
-            <label className="range-field">
-              <span>Brush size</span>
-              <input
-                min={8}
-                max={180}
-                step={2}
-                type="range"
-                value={brushSize}
-                onChange={(event) => setBrushSize(Number(event.target.value))}
-              />
-              <strong>{brushSize}px</strong>
-            </label>
-            <div className="inline-actions">
-              <button
-                type="button"
-                onClick={() => setStrokes((previous) => previous.slice(0, -1))}
-                disabled={!strokes.length}
-              >
-                Undo
-              </button>
-              <button
-                type="button"
-                onClick={() => setStrokes([])}
-                disabled={!strokes.length}
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-
-          <div className="panel-card">
-            <h2>Runtime</h2>
+    <section className="workspace" id="cleanup-tool" aria-label="AI object remover editor">
+      <aside className="control-panel">
+        <div className="panel-card">
+          <h2>Source photo</h2>
+          <label className="upload-button">
+            <input accept="image/*" type="file" onChange={handleFileChange} />
+            <span>{sourceImage ? 'Replace Image' : 'Upload Image'}</span>
+          </label>
+          <p className="panel-note">
+            Your photo stays local. Model source: <code>{configuredModelUrl}</code>
+          </p>
+          {sourceImage ? (
             <dl className="meta-grid">
               <div>
-                <dt>Engine</dt>
-                <dd>{sessionState.provider ? sessionState.provider.toUpperCase() : 'Pending'}</dd>
-              </div>
-              <div>
-                <dt>Session</dt>
-                <dd>{sessionState.status}</dd>
-              </div>
-              <div>
-                <dt>Model</dt>
-                <dd>{formatModelSource(runtimeMetrics.modelSource)}</dd>
+                <dt>Name</dt>
+                <dd>{sourceImage.name}</dd>
               </div>
               <div>
                 <dt>Size</dt>
-                <dd>{runtimeMetrics.modelBytes ? formatBytes(runtimeMetrics.modelBytes) : 'Pending'}</dd>
-              </div>
-              <div>
-                <dt>Download</dt>
-                <dd>{formatDownload(runtimeMetrics)}</dd>
-              </div>
-              <div>
-                <dt>Init</dt>
                 <dd>
-                  {runtimeMetrics.sessionInitMs !== null
-                    ? formatDuration(runtimeMetrics.sessionInitMs)
-                    : 'Pending'}
-                </dd>
-              </div>
-              <div>
-                <dt>Inference</dt>
-                <dd>
-                  {runtimeMetrics.inferenceMs !== null
-                    ? formatDuration(runtimeMetrics.inferenceMs)
-                    : 'Pending'}
+                  {sourceImage.width}×{sourceImage.height}
                 </dd>
               </div>
             </dl>
+          ) : null}
+        </div>
+
+        <div className="panel-card">
+          <h2>Mask unwanted area</h2>
+          <div className="segmented">
             <button
               type="button"
-              className="primary-action"
-              onClick={handleRun}
-              disabled={
-                !sourceImage ||
-                sessionState.status !== 'ready' ||
-                runState.status === 'running'
-              }
+              className={toolMode === 'brush' ? 'active' : ''}
+              onClick={() => setToolMode('brush')}
             >
-              {runState.status === 'running' ? 'Running…' : 'Run Cleanup'}
+              Brush
             </button>
-            <p className={`status-banner ${statusTone}`}>
-              {runState.status === 'running' || runState.status === 'done'
-                ? runState.message
-                : sessionState.message}
-            </p>
-            {runtimeMetrics.stepTimings.length ? (
-              <div className="timing-list">
-                {runtimeMetrics.stepTimings.map((step) => (
-                  <div key={step.label} className="timing-row">
-                    <span>{step.label}</span>
-                    <strong>{formatDuration(step.durationMs)}</strong>
-                  </div>
-                ))}
-              </div>
-            ) : null}
+            <button
+              type="button"
+              className={toolMode === 'erase' ? 'active' : ''}
+              onClick={() => setToolMode('erase')}
+            >
+              Erase
+            </button>
           </div>
+          <label className="range-field">
+            <span>Brush size</span>
+            <input
+              min={8}
+              max={180}
+              step={2}
+              type="range"
+              value={brushSize}
+              onChange={(event) => setBrushSize(Number(event.target.value))}
+            />
+            <strong>{brushSize}px</strong>
+          </label>
+          <div className="inline-actions">
+            <button
+              type="button"
+              onClick={() => setStrokes((previous) => previous.slice(0, -1))}
+              disabled={!strokes.length}
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              onClick={() => setStrokes([])}
+              disabled={!strokes.length}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
 
-          {resultUrl ? (
-            <div className="panel-card">
-              <h2>Output</h2>
-              <div className="inline-actions">
-                <a className="download-link" href={resultUrl} download={resultName}>
-                  Download PNG
-                </a>
-                <button type="button" onClick={handleUseResult}>
-                  Use Result
-                </button>
-              </div>
+        <div className="panel-card">
+          <h2>Local AI runtime</h2>
+          <dl className="meta-grid">
+            <div>
+              <dt>Engine</dt>
+              <dd>{sessionState.provider ? sessionState.provider.toUpperCase() : 'Pending'}</dd>
+            </div>
+            <div>
+              <dt>Session</dt>
+              <dd>{sessionState.status}</dd>
+            </div>
+            <div>
+              <dt>Model</dt>
+              <dd>{formatModelSource(runtimeMetrics.modelSource)}</dd>
+            </div>
+            <div>
+              <dt>Size</dt>
+              <dd>{runtimeMetrics.modelBytes ? formatBytes(runtimeMetrics.modelBytes) : 'Pending'}</dd>
+            </div>
+            <div>
+              <dt>Download</dt>
+              <dd>{formatDownload(runtimeMetrics)}</dd>
+            </div>
+            <div>
+              <dt>Init</dt>
+              <dd>
+                {runtimeMetrics.sessionInitMs !== null
+                  ? formatDuration(runtimeMetrics.sessionInitMs)
+                  : 'Pending'}
+              </dd>
+            </div>
+            <div>
+              <dt>Inference</dt>
+              <dd>
+                {runtimeMetrics.inferenceMs !== null
+                  ? formatDuration(runtimeMetrics.inferenceMs)
+                  : 'Pending'}
+              </dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            className="primary-action"
+            onClick={handleRun}
+            disabled={
+              !sourceImage ||
+              sessionState.status !== 'ready' ||
+              runState.status === 'running'
+            }
+          >
+            {runState.status === 'running' ? 'Running…' : 'Remove Object'}
+          </button>
+          <p className={`status-banner ${statusTone}`}>
+            {runState.status === 'running' || runState.status === 'done'
+              ? runState.message
+              : sessionState.message}
+          </p>
+          {runtimeMetrics.stepTimings.length ? (
+            <div className="timing-list">
+              {runtimeMetrics.stepTimings.map((step) => (
+                <div key={step.label} className="timing-row">
+                  <span>{step.label}</span>
+                  <strong>{formatDuration(step.durationMs)}</strong>
+                </div>
+              ))}
             </div>
           ) : null}
-        </aside>
+        </div>
 
-        <section className="editor-panel">
-          <div className="editor-card" ref={editorRef}>
-            {sourceImage ? (
-              <MaskStage
-                brushSize={brushSize}
-                image={sourceImage}
-                stageMaxWidth={imageStageMaxWidth}
-                strokes={strokes}
-                toolMode={toolMode}
-                onChange={setStrokes}
-                disabled={runState.status === 'running'}
-              />
-            ) : (
-              <div className="empty-state">
-                <h2>Load an image to start</h2>
-                <p>
-                  Paint the unwanted object in red. The app keeps everything on-device and
-                  only runs the selected patch through the 512×512 LaMa model.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {resultUrl ? (
-            <div className="result-card">
-              <div className="result-heading">
-                <h2>Latest Result</h2>
-                <p>Feather-blended patch, ready to download.</p>
-              </div>
-              <img src={resultUrl} alt="Inpainting result preview" />
+        {resultUrl ? (
+          <div className="panel-card">
+            <h2>Output</h2>
+            <div className="inline-actions">
+              <a className="download-link" href={resultUrl} download={resultName}>
+                Download PNG
+              </a>
+              <button type="button" onClick={handleUseResult}>
+                Use Result
+              </button>
             </div>
-          ) : null}
-        </section>
+          </div>
+        ) : null}
+      </aside>
+
+      <section className="editor-panel">
+        <div className="editor-card" ref={editorRef}>
+          {sourceImage ? (
+            <MaskStage
+              brushSize={brushSize}
+              image={sourceImage}
+              stageMaxWidth={imageStageMaxWidth}
+              strokes={strokes}
+              toolMode={toolMode}
+              onChange={setStrokes}
+              disabled={runState.status === 'running'}
+            />
+          ) : (
+            <div className="empty-state">
+              <h2>Upload a photo to remove an object</h2>
+              <p>
+                Your image stays on this device. After you choose a photo, the local AI model starts
+                loading while you paint the unwanted area in red.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {resultUrl ? (
+          <div className="result-card">
+            <div className="result-heading">
+              <h2>Latest Result</h2>
+              <p>Feather-blended patch, ready to download.</p>
+            </div>
+            <img src={resultUrl} alt="Photo after unwanted object removal" />
+          </div>
+        ) : null}
       </section>
-    </main>
+    </section>
   )
 }
 
